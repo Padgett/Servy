@@ -8,3 +8,7 @@ erl_crash.dump
 *.beam
 /config/*.secret.exs
 .elixir_ls/
+erl_crash.dump
+*.ez
+servy-*.tar
+/tmp/
