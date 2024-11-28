@@ -2,12 +2,28 @@ defmodule Servy.Handler do
   def handle(request) do
     request
     |> parse
-    |> log
+    |> rewrite_path
     |> route
+    |> track
     |> format_response
   end
 
-  def log(conv), do: IO.inspect conv
+  def track(%{status: 404, path: path} = conv) do
+    IO.puts "Warning: #{path} is on the loose!"
+    conv
+  end
+
+  def track(conv), do: conv
+
+  def rewrite_path(%{path: "/wildlife"} = conv) do
+    %{ conv | path: "/wildthings" }
+  end
+
+  def rewrite_path(%{path: "/bears?id=" <> id} = conv) do
+    %{ conv | path: "/bears/#{id}" }
+  end
+
+  def rewrite_path(conv), do: conv
 
   def parse(request) do
     [method, path, _] =
@@ -23,28 +39,24 @@ defmodule Servy.Handler do
     }
   end
 
-  def route(conv) do
-    route(conv, conv.method, conv.path)
-  end
-
-  def route(conv, "GET", "/wildthings") do
+  def route(%{ method: "GET", path: "/wildthings" } = conv) do
     %{ conv | status: 200, resp_body: "Bears, Lions, Tigers" }
   end
 
-  def route(conv, "GET", "/bears") do
+  def route(%{ method: "GET", path: "/bears" } = conv) do
     %{ conv | status: 200, resp_body: "Teddy, Smokey, Paddington" }
   end
 
-  def route(conv, "GET", "/bears/" <> id) do
+  def route(%{ method: "GET", path: "/bears/" <> id } = conv) do
     %{ conv | status: 200, resp_body: "Bear #{id}" }
   end
 
-  def route(conv, "DELETE", "/bears/" <> _id) do
+  def route(%{ method: "DELETE", path: "/bears/" <> _id} = conv) do
     %{ conv | status: 403, resp_body: "Deleting a bear is forbidden!"}
   end
 
-# Catch all 404
-  def route(conv, _method, path) do
+  # Catch all 404
+  def route(%{ path: path } = conv) do
     %{ conv | status: 404, resp_body: "No #{path} here!"}
   end
 
