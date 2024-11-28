@@ -1,4 +1,6 @@
 defmodule Servy.Handler do
+  require Logger
+
   def handle(request) do
     request
     |> parse
@@ -9,7 +11,12 @@ defmodule Servy.Handler do
   end
 
   def track(%{status: 404, path: path} = conv) do
-    IO.puts "Warning: #{path} is on the loose!"
+    Logger.info "404 -  #{path} is on the loose!"
+    conv
+  end
+
+  def track(%{status: 403, path: path, method: method} = conv) do
+    Logger.warning "403 - Attempted #{method} of #{path}"
     conv
   end
 
@@ -63,7 +70,7 @@ defmodule Servy.Handler do
     %{ conv | status: 403, resp_body: "Deleting a bear is forbidden!"}
   end
 
-  # Catch all 404
+  # Catch all - 404
   def route(%{ path: path } = conv) do
     %{ conv | status: 404, resp_body: "No #{path} here!"}
   end
