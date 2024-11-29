@@ -12,3 +12,4 @@ erl_crash.dump
 *.ez
 servy-*.tar
 /tmp/
+servy.code-workspace
