@@ -62,6 +62,13 @@ defmodule Servy.Handler do
     %{ conv | status: 200, resp_body: "Teddy, Smokey, Paddington" }
   end
 
+  def route(%{ method: "GET", path: "/bears/new" } = conv) do
+    pages_path()
+    |> Path.join("form.html")
+    |> File.read()
+    |> handle_file(conv)
+  end
+
   def route(%{ method: "GET", path: "/bears/" <> id } = conv) do
     %{ conv | status: 200, resp_body: "Bear #{id}" }
   end
@@ -71,15 +78,19 @@ defmodule Servy.Handler do
   end
 
   def route(%{ method: "GET", path: "/about" } = conv) do
-    Path.expand("../../pages", __DIR__)
+    pages_path()
     |> Path.join("about.html")
-    |> File.read
+    |> File.read()
     |> handle_file(conv)
   end
 
   # Catch all - 404
   def route(%{ path: path } = conv) do
     %{ conv | status: 404, resp_body: "No #{path} here!"}
+  end
+
+  defp pages_path do
+    Path.expand("../../pages", __DIR__)
   end
 
   defp handle_file({:ok, content}, conv) do
@@ -201,7 +212,7 @@ response = Servy.Handler.handle(request)
 IO.puts response
 
 request = """
-GET /about HTTP/1.1
+GET /bears/new HTTP/1.1
 Host: example.com
 User-Agent: ExampleBrowser/1.0
 Accept: */*
