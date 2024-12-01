@@ -13,3 +13,4 @@ erl_crash.dump
 servy-*.tar
 /tmp/
 servy.code-workspace
+.DS_Store
