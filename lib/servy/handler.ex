@@ -1,6 +1,8 @@
 defmodule Servy.Handler do
   require Logger
 
+  @pages_path Path.expand("../../pages", __DIR__)
+
   def handle(request) do
     request
     |> parse
@@ -63,7 +65,7 @@ defmodule Servy.Handler do
   end
 
   def route(%{ method: "GET", path: "/bears/new" } = conv) do
-    pages_path()
+    @pages_path
     |> Path.join("form.html")
     |> File.read()
     |> handle_file(conv)
@@ -78,19 +80,15 @@ defmodule Servy.Handler do
   end
 
   def route(%{ method: "GET", path: "/about" } = conv) do
-    pages_path()
+    @pages_path
     |> Path.join("about.html")
     |> File.read()
     |> handle_file(conv)
   end
 
-  # Catch all - 404
+  # Catch-all route
   def route(%{ path: path } = conv) do
     %{ conv | status: 404, resp_body: "No #{path} here!"}
-  end
-
-  defp pages_path do
-    Path.expand("../../pages", __DIR__)
   end
 
   defp handle_file({:ok, content}, conv) do
