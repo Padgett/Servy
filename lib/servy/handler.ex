@@ -1,7 +1,9 @@
 defmodule Servy.Handler do
-  require Logger
+  @pages_path Path.expand("pages", File.cwd!)
 
-  @pages_path Path.expand("../../pages", __DIR__)
+  import Servy.Plugins, only: [track: 1, rewrite_path: 1]
+  import Servy.Parser, only: [parse: 1]
+  import Servy.FileHandler, only: [handle_file: 2]
 
   def handle(request) do
     request
@@ -10,50 +12,6 @@ defmodule Servy.Handler do
     |> route
     |> track
     |> format_response
-  end
-
-  def track(%{status: 404, path: path} = conv) do
-    Logger.info "404 -  #{path} is on the loose!"
-    conv
-  end
-
-  def track(%{status: 403, path: path, method: method} = conv) do
-    Logger.warning "403 - Attempted #{method} of #{path}"
-    conv
-  end
-
-  def track(conv), do: conv
-
-  def rewrite_path(%{path: "/wildlife"} = conv) do
-    %{ conv | path: "/wildthings" }
-  end
-
-  def rewrite_path(%{path: path} = conv) do
-    regex = ~r{\/(?<thing>\w+)\?id=(?<id>\d+)}
-    captures = Regex.named_captures(regex, path)
-    rewrite_path_captures(conv, captures)
-  end
-
-  def rewrite_path(conv), do: conv
-
-  def rewrite_path_captures(conv, %{"thing" => thing, "id" => id}) do
-    %{ conv | path: "/#{thing}/#{id}" }
-  end
-
-  def rewrite_path_captures(conv, nil), do: conv
-
-  def parse(request) do
-    [method, path, _] =
-      request
-      |> String.split("\n")
-      |> List.first
-      |> String.split(" ")
-
-      %{ method: method,
-      path: path,
-      resp_body: "",
-      status: nil
-    }
   end
 
   def route(%{ method: "GET", path: "/wildthings" } = conv) do
@@ -89,18 +47,6 @@ defmodule Servy.Handler do
   # Catch-all route
   def route(%{ path: path } = conv) do
     %{ conv | status: 404, resp_body: "No #{path} here!"}
-  end
-
-  defp handle_file({:ok, content}, conv) do
-    %{ conv | status: 200, resp_body: content }
-  end
-
-  defp handle_file({:error, :enoent}, conv) do
-    %{ conv | status: 404, resp_body: "File not found" }
-  end
-
-  defp handle_file({:error, reason}, conv) do
-    %{ conv | status: 500, resp_body: "File Error: #{reason}" }
   end
 
   def format_response(conv) do
